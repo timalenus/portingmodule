@@ -134,7 +134,11 @@ function _weather_download_forecast($geoid) {
   // Do not download anything if the variable 'weather_time_for_testing' is set.
   // In this case, we are in testing mode and only load defined
   // forecasts to get always the same results.
-  if (variable_get('weather_time_for_testing', REQUEST_TIME) != REQUEST_TIME) {
+  // @FIXME
+// Could not extract the default value because it is either indeterminate, or
+// not scalar. You'll need to provide a default value in
+// config/install/weather.settings.yml and config/schema/weather.schema.yml.
+if (\Drupal::config('weather.settings')->get('weather_time_for_testing') != REQUEST_TIME) {
     $path = drupal_get_path('module', 'weather') . '/tests/data/' . $geoid . '.xml';
     if (is_readable($path)) {
       $xml = file_get_contents($path);
@@ -148,17 +152,24 @@ function _weather_download_forecast($geoid) {
   $timeout = 10;
   module_load_include('inc', 'weather', 'weather.common');
   $url = _weather_get_link_for_geoid($geoid, 'yr');
-  $response = drupal_http_request($url, array('timeout' => $timeout));
+  // @FIXME
+// drupal_http_request() has been replaced by the Guzzle HTTP client, which is bundled
+// with Drupal core.
+// 
+// 
+// @see https://www.drupal.org/node/1862446
+// @see http://docs.guzzlephp.org/en/latest
+// $response = drupal_http_request($url, array('timeout' => $timeout));
+
   // Extract XML data from the received forecast.
   if (!isset($response->error)) {
     return _weather_parse_forecast($response->data, $geoid);
   }
   else {
     // Make an entry about this error into the watchdog table.
-    watchdog('weather', 'Download of forecast failed: @error',
-      array('@error' => $response->error), WATCHDOG_ERROR);
+    \Drupal::logger('weather')->error('Download of forecast failed: @error', array('@error' => $response->error));
     // Show a message to users with administration priviledges
-    if (user_access('administer custom weather block') or user_access('administer site configuration')) {
+    if (\Drupal::currentUser()->hasPermission('administer custom weather block') or \Drupal::currentUser()->hasPermission('administer site configuration')) {
       drupal_set_message(t('Download of forecast failed: @error',
         array('@error' => $response->error)), 'error');
     }

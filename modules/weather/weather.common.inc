@@ -32,7 +32,7 @@
  *   the display configuration.
  */
 function weather_show_detailed_forecast($country, $link) {
-  global $user;
+  $user = \Drupal::currentUser();
   // If the last part of the link contains an appended slash
   // and a number, this indicates the display configuration of
   // the system-wide display with the given number.
@@ -77,7 +77,7 @@ function weather_show_detailed_forecast($country, $link) {
       array(':geoid' => $place->geoid)
     )->fetchObject();
     if ($configured === FALSE) {
-      if (!user_access('access weather search page')) {
+      if (!\Drupal::currentUser()->hasPermission('access weather search page')) {
         return MENU_ACCESS_DENIED;
       }
     }
@@ -92,8 +92,18 @@ function weather_show_detailed_forecast($country, $link) {
     $weather[0]['name'] = $name;
     $weather[0]['geoid'] = $place->geoid;
     $weather[0]['yr.no'] = _weather_get_link_for_geoid($place->geoid, 'yr.no');
-    return theme('weather_forecast_preprocess',
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// 
+return theme('weather_forecast_preprocess',
       array('weather' => $weather, 'display' => $display));
+
   }
   else {
     // The specified link does not exist in the weather database.
@@ -320,7 +330,11 @@ function weather_get_nearest_station($latitude, $longitude) {
  */
 function weather_get_weather($geoid, $days=0, $detailed=TRUE) {
   // Support testing of module with fixed times instead of current time.
-  $time = variable_get('weather_time_for_testing', REQUEST_TIME);
+  // @FIXME
+// Could not extract the default value because it is either indeterminate, or
+// not scalar. You'll need to provide a default value in
+// config/install/weather.settings.yml and config/schema/weather.schema.yml.
+$time = \Drupal::config('weather.settings')->get('weather_time_for_testing');
   module_load_include('inc', 'weather', 'weather_parser');
   // Get the scheduled time of next update. If there is no entry for
   // the specified GeoID, $meta will be FALSE.

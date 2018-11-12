@@ -1,0 +1,6 @@
+name: Weather
+description: 'Displays current weather and forecasts'
+core: 8.x
+dependencies:
+  - block
+type: module

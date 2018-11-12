@@ -75,10 +75,28 @@ function theme_weather_forecast_preprocess($variables) {
     }
   }
   if ($display->detailed) {
-    return theme('weather_detailed_forecast', array('weather' => $weather));
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// return theme('weather_detailed_forecast', array('weather' => $weather));
+
   }
   else {
-    return theme('weather', array('weather' => $weather));
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// return theme('weather', array('weather' => $weather));
+
   }
 }
 
@@ -240,8 +258,13 @@ function weather_format_image($symbol, $condition) {
   // Support a custom image directory. If the variable is not set or the specified
   // file is not available, fall back to the default images of the module.
   // Determine the active theme path.
-  $theme_path = drupal_get_path('theme', variable_get('theme_default', NULL));
-  $custom_path = $theme_path . '/' . variable_get('weather_image_directory', '') . '/';
+  // @FIXME
+// // @FIXME
+// // This looks like another module's variable. You'll need to rewrite this call
+// // to ensure that it uses the correct configuration object.
+// $theme_path = drupal_get_path('theme', variable_get('theme_default', NULL));
+
+  $custom_path = $theme_path . '/' . \Drupal::config('weather.settings')->get('weather_image_directory') . '/';
   // Construct the filename
   $image = $custom_path . $symbol . '.png';
   if (!is_readable($image)) {
@@ -250,14 +273,23 @@ function weather_format_image($symbol, $condition) {
   }
   $size = getimagesize($image);
   // Prepare the <img> tag
-  return theme('image', array(
-    'path' => $image,
-    'width' => $size[0],
-    'height' => $size[1],
-    'alt' => $condition,
-    'title' => $condition,
-    'attributes' => array('class' => 'weather-image')
-  ));
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// return theme('image', array(
+//     'path' => $image,
+//     'width' => $size[0],
+//     'height' => $size[1],
+//     'alt' => $condition,
+//     'title' => $condition,
+//     'attributes' => array('class' => 'weather-image')
+//   ));
+
 }
 
 /**

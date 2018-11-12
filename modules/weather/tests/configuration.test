@@ -48,7 +48,7 @@ class WeatherConfigurationTestCase extends DrupalWebTestCase {
    */
   public function testConfiguration() {
     // Set a fixed time for testing to 2013-10-07 20:00:00 UTC
-    variable_set('weather_time_for_testing', 1381176000);
+    \Drupal::configFactory()->getEditable('weather.settings')->set('weather_time_for_testing', 1381176000)->save();
     // This user may setup a system-wide weather block.
     $admin_user = $this->drupalCreateUser(array(
       'access content', 'administer custom weather block',

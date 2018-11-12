@@ -48,17 +48,20 @@ function weather_cron() {
  * Implement hook_permission().
  */
 function weather_permission() {
-  return array(
-    'administer custom weather block' => array(
-      'title' => t('Administer custom weather block'),
-      'description' => t('Allows users to configure their custom weather block.'),
-    ),
-    'access weather search page' => array(
-      'title' => t('Access weather search page'),
-      'description' => t('Allows users to access the !weather_search_page which provides a search for all weather stations.',
-        array('!weather_search_page' => l(t('weather search page'), 'weather'))),
-    ),
-  );
+  // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// return array(
+//     'administer custom weather block' => array(
+//       'title' => t('Administer custom weather block'),
+//       'description' => t('Allows users to configure their custom weather block.'),
+//     ),
+//     'access weather search page' => array(
+//       'title' => t('Access weather search page'),
+//       'description' => t('Allows users to access the !weather_search_page which provides a search for all weather stations.',
+//         array('!weather_search_page' => l(t('weather search page'), 'weather'))),
+//     ),
+//   );
+
 }
 
 /**
@@ -249,13 +252,13 @@ function weather_help($path, $arg) {
     case 'admin/config/user-interface/weather':
       $output .= '<p>';
       $output .= t('You can add, edit, and delete locations from system-wide weather displays. Moreover, you can specify default values for newly created displays. If you want to change the format of the displayed date, you can do that in the <a href="@url">date configuration</a>.',
-        array('@url' => url('admin/config/regional/date-time')));
+        array('@url' => \Drupal\Core\Url::fromRoute('entity.date_format.collection')));
       $output .= '</p>';
       break;
     case 'admin/config/user-interface/weather/places':
       $output .= '<p>';
       $output .= t('You can add new places to the module. Just paste the URL of the weather forecast on the <a href="@url">yr.no</a> website in the input field below. The easiest way to do this is to search on their website for the wanted place, click on the forecast link and copy the URL from the address bar of your browser.',
-        array('@url' => url('http://www.yr.no/')));
+        array('@url' => \Drupal\Core\Url::fromUri('http://www.yr.no/')));
       $output .= '</p>';
       break;
     case 'user/%/weather':
@@ -303,7 +306,7 @@ function weather_block_info() {
  * Implement hook_block_view().
  */
 function weather_block_view($delta = '') {
-  global $user;
+  $user = \Drupal::currentUser();
   module_load_include('inc', 'weather', 'weather.common');
   $block = array();
   // Handle the 'system_NUMBER' type of blocks
@@ -313,7 +316,7 @@ function weather_block_view($delta = '') {
   else {
     list($display_type, $display_number) = explode('_', $delta);
   }
-  $forecast_days = (int) variable_get('weather_forecast_days', '2');
+  $forecast_days = (int) \Drupal::config('weather.settings')->get('weather_forecast_days');
   switch ($display_type) {
     case 'user':
       if (weather_access_userblock()) {
@@ -334,19 +337,32 @@ function weather_block_view($delta = '') {
           $weather[$idx]['name'] = $place->displayed_name;
           $weather[$idx]['geoid'] = $place->place_geoid;
           $link = _weather_get_link_for_geoid($place->place_geoid, 'user', $user->uid);
-          $weather[$idx]['link'] = l($place->displayed_name, $link);
+          // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $weather[$idx]['link'] = l($place->displayed_name, $link);
+
           $link = _weather_get_link_for_geoid($place->place_geoid, 'yr.no');
           $weather[$idx]['yr.no'] = $link;
         }
-        $block['content'] = theme('weather_forecast_preprocess',
+        // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// 
+$block['content'] = theme('weather_forecast_preprocess',
           array('weather' => $weather, 'display' => $display));
+
       }
       break;
     case 'location':
-      if (user_access('access content')) {
+      if (\Drupal::currentUser()->hasPermission('access content')) {
         // Set up the node location weather block.
         if (arg(0) == 'node' and is_numeric(arg(1))) {
-          $node = node_load(arg(1));
+          $node = \Drupal::entityManager()->getStorage('node')->load(arg(1));
           $block['subject'] = t('Weather nearby');
           $block['content'] = '';
           $display = weather_get_display_config('default');
@@ -365,12 +381,24 @@ function weather_block_view($delta = '') {
                 $weather[0]['name'] = $place->displayed_name;
                 $weather[0]['geoid'] = $place->geoid;
                 $link = _weather_get_link_for_geoid($place->geoid, 'default');
-                $weather[0]['link'] = l($place->displayed_name, $link);
+                // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $weather[0]['link'] = l($place->displayed_name, $link);
+
                 $link = _weather_get_link_for_geoid($place->geoid, 'yr.no');
                 $weather[0]['yr.no'] = $link;
                 $weather[0]['station'] = array('distance' => $place->distance, 'bearing' => $place->bearing);
-                $block['content'] = theme('weather_forecast_preprocess',
+                // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $block['content'] = theme('weather_forecast_preprocess',
                   array('weather' => $weather, 'display' => $display));
+
               }
             }
           }
@@ -397,12 +425,24 @@ function weather_block_view($delta = '') {
                       $weather[0]['name'] = $place->displayed_name;
                       $weather[0]['geoid'] = $place->geoid;
                       $link = _weather_get_link_for_geoid($place->geoid, 'default');
-                      $weather[0]['link'] = l($place->displayed_name, $link);
+                      // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $weather[0]['link'] = l($place->displayed_name, $link);
+
                       $link = _weather_get_link_for_geoid($place->geoid, 'yr.no');
                       $weather[0]['yr.no'] = $link;
                       $weather[0]['station'] = array('distance' => $place->distance, 'bearing' => $place->bearing);
-                      $block['content'] = theme('weather_forecast_preprocess',
+                      // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $block['content'] = theme('weather_forecast_preprocess',
                         array('weather' => $weather, 'display' => $display));
+
                     }
                   }
                 }
@@ -417,10 +457,10 @@ function weather_block_view($delta = '') {
       }
       break;
     case 'geofield':
-      if (user_access('access content')) {
+      if (\Drupal::currentUser()->hasPermission('access content')) {
         // Set up the node geofield weather block.
         if (arg(0) == 'node' and is_numeric(arg(1))) {
-          $node = node_load(arg(1));
+          $node = \Drupal::entityManager()->getStorage('node')->load(arg(1));
           $block['subject'] = t('Weather nearby');
           $block['content'] = '';
           $display = weather_get_display_config('default');
@@ -446,12 +486,24 @@ function weather_block_view($delta = '') {
                     $weather[0]['name'] = $place->displayed_name;
                     $weather[0]['geoid'] = $place->geoid;
                     $link = _weather_get_link_for_geoid($place->geoid, 'default');
-                    $weather[0]['link'] = l($place->displayed_name, $link);
+                    // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $weather[0]['link'] = l($place->displayed_name, $link);
+
                     $link = _weather_get_link_for_geoid($place->geoid, 'yr.no');
                     $weather[0]['yr.no'] = $link;
                     $weather[0]['station'] = array('distance' => $place->distance, 'bearing' => $place->bearing);
-                    $block['content'] = theme('weather_forecast_preprocess',
+                    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $block['content'] = theme('weather_forecast_preprocess',
                       array('weather' => $weather, 'display' => $display));
+
                   }
                 }
               }
@@ -465,11 +517,11 @@ function weather_block_view($delta = '') {
       }
       break;
     case 'geofieldtaxonomyterms':
-      if (user_access('access content')) {
+      if (\Drupal::currentUser()->hasPermission('access content')) {
         // Set up the taxonomy terms geofield weather block.
         if (arg(0) == 'taxonomy' and arg(1) == 'term') {
           $tid = (int) arg(2);
-          $term = taxonomy_term_load($tid);
+          $term = \Drupal::entityManager()->getStorage("taxonomy_term")->load($tid);
           $block['subject'] = t('Weather nearby');
           $block['content'] = '';
           $display = weather_get_display_config('default');
@@ -495,12 +547,24 @@ function weather_block_view($delta = '') {
                     $weather[0]['name'] = $place->displayed_name;
                     $weather[0]['geoid'] = $place->geoid;
                     $link = _weather_get_link_for_geoid($place->geoid, 'default');
-                    $weather[0]['link'] = l($place->displayed_name, $link);
+                    // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $weather[0]['link'] = l($place->displayed_name, $link);
+
                     $link = _weather_get_link_for_geoid($place->geoid, 'yr.no');
                     $weather[0]['yr.no'] = $link;
                     $weather[0]['station'] = array('distance' => $place->distance, 'bearing' => $place->bearing);
-                    $block['content'] = theme('weather_forecast_preprocess',
+                    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $block['content'] = theme('weather_forecast_preprocess',
                       array('weather' => $weather, 'display' => $display));
+
                   }
                 }
               }
@@ -514,7 +578,7 @@ function weather_block_view($delta = '') {
       }
       break;
     case 'ip':
-      if (user_access('access content') and module_exists('smart_ip')) {
+      if (\Drupal::currentUser()->hasPermission('access content') and \Drupal::moduleHandler()->moduleExists('smart_ip')) {
         $smart_ip_session = smart_ip_session_get('smart_ip');
         // Check that the lookup did find a location for the IP.
         if (isset($smart_ip_session['location'])) {
@@ -531,18 +595,30 @@ function weather_block_view($delta = '') {
             $weather[0]['name'] = $place->displayed_name;
             $weather[0]['geoid'] = $place->geoid;
             $link = _weather_get_link_for_geoid($place->geoid, 'default');
-            $weather[0]['link'] = l($place->displayed_name, $link);
+            // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $weather[0]['link'] = l($place->displayed_name, $link);
+
             $link = _weather_get_link_for_geoid($place->geoid, 'yr.no');
             $weather[0]['yr.no'] = $link;
             $weather[0]['station'] = array('distance' => $place->distance, 'bearing' => $place->bearing);
-            $block['content'] = theme('weather_forecast_preprocess',
+            // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $block['content'] = theme('weather_forecast_preprocess',
               array('weather' => $weather, 'display' => $display));
+
           }
         }
       }
       break;
     case 'system':
-      if (user_access('access content')) {
+      if (\Drupal::currentUser()->hasPermission('access content')) {
         // Show a system-wide weather display.
         $block['subject'] = t('Weather');
         $weather = array();
@@ -559,12 +635,24 @@ function weather_block_view($delta = '') {
           $weather[$idx]['name'] = $place->displayed_name;
           $weather[$idx]['geoid'] = $place->place_geoid;
           $link = _weather_get_link_for_geoid($place->place_geoid, 'system-wide', $display_number);
-          $weather[$idx]['link'] = l($place->displayed_name, $link);
+          // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $weather[$idx]['link'] = l($place->displayed_name, $link);
+
           $link = _weather_get_link_for_geoid($place->place_geoid, 'yr.no');
           $weather[$idx]['yr.no'] = $link;
         }
-        $block['content'] = theme('weather_forecast_preprocess',
+        // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $block['content'] = theme('weather_forecast_preprocess',
           array('weather' => $weather, 'display' => $display));
+
       }
   }
   return $block;
@@ -580,10 +668,10 @@ function weather_block_view($delta = '') {
  *   TRUE or FALSE.
  */
 function weather_access_userblock($uid=NULL) {
-  global $user;
+  $user = \Drupal::currentUser();
   // If $uid is not set, just check for the access permission.
   if (is_null($uid) || $user->uid == $uid) {
-    return user_access('administer custom weather block');
+    return \Drupal::currentUser()->hasPermission('administer custom weather block');
   }
   return FALSE;
 }

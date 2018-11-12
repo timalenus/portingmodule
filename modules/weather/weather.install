@@ -114,16 +114,26 @@ function _weather_data_installation() {
 function weather_install() {
   _weather_data_installation();
   // Save the first new date format into variables.
-  variable_set('date_format_weather', 'F j, Y');
+  // @FIXME
+// // @FIXME
+// // This looks like another module's variable. You'll need to rewrite this call
+// // to ensure that it uses the correct configuration object.
+// variable_set('date_format_weather', 'F j, Y');
+
 }
 
 /**
  * Implement hook_uninstall().
  */
 function weather_uninstall() {
-  variable_del('weather_image_directory');
-  variable_del('date_format_weather');
-  variable_del('weather_forecast_days');
+  \Drupal::config('weather.settings')->clear('weather_image_directory')->save();
+  // @FIXME
+// // @FIXME
+// // This looks like another module's variable. You'll need to rewrite this call
+// // to ensure that it uses the correct configuration object.
+// variable_del('date_format_weather');
+
+  \Drupal::config('weather.settings')->clear('weather_forecast_days')->save();
   // Remove blocks provided by the module
   db_delete('block')
     ->condition('module', 'weather')
@@ -656,7 +666,12 @@ function weather_update_7206(&$sandbox) {
  * Save the weather date format into variables.
  */
 function weather_update_7207(&$sandbox) {
-  variable_set('date_format_weather', 'F j, Y');
+  // @FIXME
+// // @FIXME
+// // This looks like another module's variable. You'll need to rewrite this call
+// // to ensure that it uses the correct configuration object.
+// variable_set('date_format_weather', 'F j, Y');
+
 }
 
 /**

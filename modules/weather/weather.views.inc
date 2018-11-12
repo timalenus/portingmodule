@@ -222,7 +222,11 @@ function weather_views_pre_execute(&$view) {
     $geoids = array_unique($geoids);
     sort($geoids);
     // Get all geoids with current forecasts (no download needed).
-    $time = variable_get('weather_time_for_testing', REQUEST_TIME);
+    // @FIXME
+// Could not extract the default value because it is either indeterminate, or
+// not scalar. You'll need to provide a default value in
+// config/install/weather.settings.yml and config/schema/weather.schema.yml.
+$time = \Drupal::config('weather.settings')->get('weather_time_for_testing');
     $current_utc_time = gmdate('Y-m-d H:i:s', $time);
     $current_forecasts = db_query(
       'SELECT * FROM {weather_forecast_information} WHERE geoid IN (:geoids) AND next_download_attempt > :current_utc_time',

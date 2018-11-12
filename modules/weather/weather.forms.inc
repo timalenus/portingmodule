@@ -31,35 +31,53 @@ function weather_admin_main_page() {
   $displays = weather_get_displays_in_use('system-wide');
   if (!empty($displays)) {
     foreach ($displays as $display_number) {
-      $header = array(
-        l(t('System-wide display (#!number)', array('!number' => $display_number)), $path . $display_number),
-        t('Weight'),
-      );
+      // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $header = array(
+//         l(t('System-wide display (#!number)', array('!number' => $display_number)), $path . $display_number),
+//         t('Weight'),
+//       );
+
 
       $rows = array();
       $result = db_query("SELECT * FROM {weather_displays_places}
         WHERE display_type='system-wide' AND display_number=:number ORDER BY weight ASC, displayed_name ASC",
         array(':number' => $display_number));
       foreach ($result as $location) {
-        $rows[] = array(
-          l($location->displayed_name, $path . $display_number . '/' . $location->id . '/edit'),
-          $location->weight,
-        );
+        // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $rows[] = array(
+//           l($location->displayed_name, $path . $display_number . '/' . $location->id . '/edit'),
+//           $location->weight,
+//         );
+
       }
       // Insert link for adding locations into the table as last row.
-      $rows[] = array(array(
-        'data' => l(t('Add location to this display'), $path . $display_number . '/add'),
-        'colspan' => 2,
-      ));
+      // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $rows[] = array(array(
+//         'data' => l(t('Add location to this display'), $path . $display_number . '/add'),
+//         'colspan' => 2,
+//       ));
 
-      $output .= theme('table', array('header' => $header, 'rows' => $rows));
+
+      // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output .= theme('table', array('header' => $header, 'rows' => $rows));
+
       if (isset($form['pager']['#value'])) {
-        $output .= drupal_render($form['pager']);
+        $output .= \Drupal::service("renderer")->render($form['pager']);
       }
     }
   }
-  $form = drupal_get_form('weather_admin_main_page_form');
-  $output .= drupal_render($form);
+  $form = \Drupal::formBuilder()->getForm('weather_admin_main_page_form');
+  $output .= \Drupal::service("renderer")->render($form);
   return $output;
 }
 
@@ -68,20 +86,25 @@ function weather_admin_main_page() {
  */
 function weather_admin_main_page_form() {
   // Determine the active theme path.
-  $theme_path = drupal_get_path('theme', variable_get('theme_default', NULL));
+  // @FIXME
+// // @FIXME
+// // This looks like another module's variable. You'll need to rewrite this call
+// // to ensure that it uses the correct configuration object.
+// $theme_path = drupal_get_path('theme', variable_get('theme_default', NULL));
+
   $form['weather_image_directory'] = array(
     '#type' => 'textfield',
     '#title' => t('Directory for custom images'),
     '#description' => t('Use custom images for displaying weather conditions. The name of this directory can be chosen freely. It will be searched in your active theme (currently %theme_path).',
       array('%theme_path' => $theme_path)),
-    '#default_value' => variable_get('weather_image_directory', ''),
+    '#default_value' => \Drupal::config('weather.settings')->get('weather_image_directory'),
   );
   $form['weather_forecast_days'] = array(
     '#type' => 'select',
     '#title' => t('Number of forecast days'),
     '#description' => t('You can configure the number of days for the forecast displays in blocks.'),
-    '#default_value' => variable_get('weather_forecast_days', '2'),
-    '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)),
+    '#default_value' => \Drupal::config('weather.settings')->get('weather_forecast_days'),
+    '#options' => array_combine(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14), array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)),
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -99,8 +122,8 @@ function weather_admin_main_page_form_submit($form, &$form_state) {
   $directory = trim(trim($directory, '/\\'));
   // Replace Windows-style directory separators with Unix separators
   $directory = implode('/', explode('\\', $directory));
-  variable_set('weather_image_directory', $directory);
-  variable_set('weather_forecast_days', $form_state['values']['weather_forecast_days']);
+  \Drupal::configFactory()->getEditable('weather.settings')->set('weather_image_directory', $directory)->save();
+  \Drupal::configFactory()->getEditable('weather.settings')->set('weather_forecast_days', $form_state['values']['weather_forecast_days'])->save();
   drupal_set_message(t('The configuration has been saved.'));
 }
 
@@ -110,8 +133,8 @@ function weather_admin_main_page_form_submit($form, &$form_state) {
 function weather_admin_places() {
   $output = '';
   // Create form for adding places
-  $form = drupal_get_form('weather_admin_places_form');
-  $output .= drupal_render($form);
+  $form = \Drupal::formBuilder()->getForm('weather_admin_places_form');
+  $output .= \Drupal::service("renderer")->render($form);
   // Create tables for modified places
   $tables = array(
     'added' => t('Added places'),
@@ -136,12 +159,21 @@ function weather_admin_places() {
         $place->link,
       );
     }
-    $output .= theme('table', array(
-      'header' => $header,
-      'rows' => $rows,
-      'caption' => $caption,
-      'empty' => t('No places.'),
-    ));
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output .= theme('table', array(
+//       'header' => $header,
+//       'rows' => $rows,
+//       'caption' => $caption,
+//       'empty' => t('No places.'),
+//     ));
+
   }
   return $output;
 }
@@ -193,7 +225,15 @@ function weather_admin_places_form_submit($form, &$form_state) {
   }
   $url .= 'forecast.xml';
   // Try to fetch the forecast, timeout 10 seconds.
-  $response = drupal_http_request($url, array('timeout' => 10));
+  // @FIXME
+// drupal_http_request() has been replaced by the Guzzle HTTP client, which is bundled
+// with Drupal core.
+// 
+// 
+// @see https://www.drupal.org/node/1862446
+// @see http://docs.guzzlephp.org/en/latest
+// $response = drupal_http_request($url, array('timeout' => 10));
+
   // Extract XML data from the received forecast.
   if (!isset($response->error)) {
     if (_weather_parse_forecast($response->data)) {
@@ -224,22 +264,40 @@ function weather_user_main_page($uid) {
     WHERE display_type=:type AND display_number=:number ORDER BY weight ASC, displayed_name ASC',
     array(':type' => 'user', ':number' => $uid));
   foreach ($result as $location) {
-    $rows[] = array(
-      l($location->displayed_name, $path . $location->id),
-      $location->weight
-    );
+    // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $rows[] = array(
+//       l($location->displayed_name, $path . $location->id),
+//       $location->weight
+//     );
+
   }
   // Insert link for adding locations into the table as last row.
-  $rows[] = array(array(
-    'data' => l(t('Add location to this display'), $path . 'add'),
-    'colspan' => 2,
-  ));
-  $output = theme('table', array('header' => $header, 'rows' => $rows));
+  // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $rows[] = array(array(
+//     'data' => l(t('Add location to this display'), $path . 'add'),
+//     'colspan' => 2,
+//   ));
+
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output = theme('table', array('header' => $header, 'rows' => $rows));
+
   if (isset($form['pager']['#value'])) {
-    $output .= drupal_render($form['pager']);
+    $output .= \Drupal::service("renderer")->render($form['pager']);
   }
-  $output .= '<p>' . l(t('Edit configuration of display'),
+  // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $output .= '<p>' . l(t('Edit configuration of display'),
     $path . 'display') . '</p>';
+
   return $output;
 }
 
@@ -552,7 +610,7 @@ function weather_location_settings_form($form, &$form_state, $display_type, $dis
     '#title' => t('Country'),
     '#description' => t('Select a country to narrow down your search.'),
     '#default_value' => $settings->country,
-    '#options' => drupal_map_assoc(weather_get_countries()),
+    '#options' => array_combine(weather_get_countries(), weather_get_countries()),
     '#ajax' => array(
       'callback' => 'weather_location_settings_form_country_callback',
       'wrapper' => 'weather_place_replace',
@@ -665,10 +723,10 @@ function weather_location_settings_form_submit($form, &$form_state) {
   $location = (object) $form_state['values'];
   $location->place_geoid = $location->place;
   if ($location->id == NULL) {
-    drupal_write_record('weather_displays_places', $location);
+    \Drupal::database()->insert('weather_displays_places')->fields($location)->execute();
   }
   else {
-    drupal_write_record('weather_displays_places', $location, 'id');
+    \Drupal::database()->merge('weather_displays_places')->fields($location)->key(['id'])->execute();
   }
   if ($location->display_type == 'user') {
     $form_state['redirect'] = 'user/' . $location->display_number . '/weather';
@@ -773,11 +831,11 @@ function weather_search_location($search = NULL) {
   if ($search == NULL) {
     // The user did not enter a search string in the URL, so just
     // display the search form.
-    return drupal_get_form('weather_search_form');
+    return \Drupal::formBuilder()->getForm('weather_search_form');
   }
   else {
     // Do some sanity checks first.
-    if (drupal_strlen($search) < 3) {
+    if (\Drupal\Component\Utility\Unicode::strlen($search) < 3) {
       drupal_set_message(t('The string to search for must have at least three characters.'), 'error');
       drupal_goto('weather');
     }
@@ -817,12 +875,24 @@ function weather_search_location($search = NULL) {
         $links = array();
         foreach ($locations as $location) {
           $search_link = _weather_get_link_for_geoid($location->geoid, 'default');
-          $links[] = l($location->name, $search_link);
+          // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $links[] = l($location->name, $search_link);
+
         }
         $title = t('Search results for <q>@search</q>', array('@search' => $search));
-        $output = theme('item_list', array('items' => $links, 'title' => $title));
-        $form = drupal_get_form('weather_search_form');
-        $output .= drupal_render($form);
+        // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output = theme('item_list', array('items' => $links, 'title' => $title));
+
+        $form = \Drupal::formBuilder()->getForm('weather_search_form');
+        $output .= \Drupal::service("renderer")->render($form);
         return $output;
       }
     }
@@ -850,7 +920,7 @@ function weather_search_form($form, &$form_state) {
  * Validate the input from the weather search form.
  */
 function weather_search_form_validate($form, &$form_state) {
-  if (drupal_strlen($form_state['values']['search']) < 3) {
+  if (\Drupal\Component\Utility\Unicode::strlen($form_state['values']['search']) < 3) {
     form_set_error('search', t('The string to search for must have at least three characters.'));
   }
 }

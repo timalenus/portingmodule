@@ -1,0 +1,8 @@
+weather.settings:
+  type: mapping
+  label: Settings
+  mapping:
+    weather_forecast_days:
+      type: string
+    weather_image_directory:
+      type: string

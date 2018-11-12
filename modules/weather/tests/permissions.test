@@ -50,7 +50,7 @@ class WeatherPermissionTestCase extends DrupalWebTestCase {
    */
   public function testPermissions() {
     // Set a fixed time for testing to 2013-10-07 20:00:00 UTC
-    variable_set('weather_time_for_testing', 1381176000);
+    \Drupal::configFactory()->getEditable('weather.settings')->set('weather_time_for_testing', 1381176000)->save();
     // This user is allowed to view the system block
     $normal_user = $this->drupalCreateUser(array(
       'access content'
